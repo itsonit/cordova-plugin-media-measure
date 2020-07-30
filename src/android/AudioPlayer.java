@@ -39,6 +39,8 @@ import java.io.OutputStream;
 import java.io.IOException;
 import java.util.LinkedList;
 
+import android.media.audiofx.Visualizer;
+
 /**
  * This class implements the audio playback and recording capabilities used by Cordova.
  * It is called by the AudioHandler Cordova class.
@@ -93,6 +95,9 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
     private boolean prepareOnly = true;     // playback after file prepare flag
     private int seekOnPrepared = 0;     // seek to this location once media is prepared
 
+    Visualizer mVisualizer = null;
+    int maxPlaybackAmpSinceLastCall = 0;
+
     /**
      * Constructor.
      *
@@ -104,6 +109,8 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
         this.id = id;
         this.audioFile = file;
         this.tempFiles = new LinkedList<String>();
+
+        LOG.d(LOG_TAG, "AudioPlayer instance created.");
     }
 
     private String generateTempFile() {
@@ -337,7 +344,11 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
      * @param file              The name of the audio file.
      */
     public void startPlaying(String file) {
+
+        LOG.d(LOG_TAG, "startPlaying ...");
+
         if (this.readyPlayer(file) && this.player != null) {
+
             this.player.start();
             this.setState(STATE.MEDIA_RUNNING);
             this.seekOnPrepared = 0; //insures this is always reset
@@ -382,10 +393,12 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
      * Stop playing the audio file.
      */
     public void stopPlaying() {
+        LOG.d(LOG_TAG, "stopPlaying ....");
         if ((this.state == STATE.MEDIA_RUNNING) || (this.state == STATE.MEDIA_PAUSED)) {
             this.player.pause();
             this.player.seekTo(0);
-            LOG.d(LOG_TAG, "stopPlaying is calling stopped");
+            LOG.d(LOG_TAG, "stopping Visualizer");
+            if (this.mVisualizer != null) this.mVisualizer.release();
             this.setState(STATE.MEDIA_STOPPED);
         }
         else {
@@ -486,6 +499,36 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
         this.seekToPlaying(this.seekOnPrepared);
         // If start playing after prepared
         if (!this.prepareOnly) {
+
+            LOG.d(LOG_TAG, "Init Visualizer after mPlayer is prepared...");
+
+            // add visualizer to measure amp during playing
+            this.maxPlaybackAmpSinceLastCall=0;
+            int audioSessionID = this.player.getAudioSessionId();
+            LOG.d(LOG_TAG, "audioSessionID: "+audioSessionID);
+            this.mVisualizer = new Visualizer(audioSessionID);
+            int captureSizeRange = Visualizer.getCaptureSizeRange()[0];
+            LOG.d(LOG_TAG, "captureSizeRange: "+captureSizeRange);
+            this.mVisualizer.setCaptureSize(captureSizeRange);
+            this.mVisualizer.setDataCaptureListener(
+                new Visualizer.OnDataCaptureListener() {
+                    public void onWaveFormDataCapture(Visualizer visualizer, byte[] bytes, int samplingRate) {
+                        // find highest peak in bytes
+                        int unsignedPeak = 0;
+                        for (int i=0; i<bytes.length; i++) {
+                            int unsignedByte = bytes[i] & 0xff;
+                            if (unsignedByte > unsignedPeak) unsignedPeak = unsignedByte;
+                        }
+                        if (unsignedPeak > maxPlaybackAmpSinceLastCall) maxPlaybackAmpSinceLastCall = unsignedPeak;
+                        //LOG.d(LOG_TAG, "onWaveFormDataCapture "+maxPlaybackAmpSinceLastCall+ " / " + unsignedPeak  );
+                    }
+
+                    public void onFftDataCapture(Visualizer visualizer, byte[] bytes, int samplingRate) {
+                        //LOG.d(LOG_TAG, "onFftDataCapture" );
+                    }
+                }, Visualizer.getMaxCaptureRate(), true, false);
+            this.mVisualizer.setEnabled(true);
+
             this.player.start();
             this.setState(STATE.MEDIA_RUNNING);
             this.seekOnPrepared = 0; //reset only when played
@@ -607,6 +650,7 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
         if (playMode()) {
             switch (this.state) {
                 case MEDIA_NONE:
+                    LOG.d(LOG_TAG, "MEDIA_NONE");
                     if (this.player == null) {
                         this.player = new MediaPlayer();
                         this.player.setOnErrorListener(this);
@@ -755,6 +799,19 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
                 e.printStackTrace();
             }
         }
+        if (this.player != null) {
+            try{
+                // deliver max amp sind last call and reset
+                //LOG.d(LOG_TAG, "maxPlaybackAmpSinceLastCall:" + this.maxPlaybackAmpSinceLastCall);
+                int result = this.maxPlaybackAmpSinceLastCall;
+                this.maxPlaybackAmpSinceLastCall = 0;
+                return result;
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        LOG.d(LOG_TAG, "Default Null");
         return 0;
     }
 }
