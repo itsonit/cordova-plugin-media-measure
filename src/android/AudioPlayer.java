@@ -512,7 +512,24 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
             this.mVisualizer.setCaptureSize(captureSizeRange);
             this.mVisualizer.setDataCaptureListener(
                 new Visualizer.OnDataCaptureListener() {
-                    public void onWaveFormDataCapture(Visualizer visualizer, byte[] bytes, int samplingRate) {
+                    public void onWaveFormDataCapture(Visualizer visualizer, byte[] audioData, int samplingRate) {
+                        
+                        double amplitude = 0;
+                        for (int i = 0; i < audioData.length/2; i++) {
+                            double y = (audioData[i*2] | audioData[i*2+1] << 8) / 32768.0
+                            // depending on your endianness:
+                            // double y = (audioData[i*2]<<8 | audioData[i*2+1]) / 32768.0
+                            amplitude += Math.abs(y);
+                        }
+                        amplitude = amplitude / audioData.length / 2;
+                        int unsignedByte = (int) Math.floor(( amplitude / 32767.0) * 256.0);
+                        LOG.d(LOG_TAG, "maxPlaybackAmpSinceLastCall:" + amplitude + " --> "+ unsignedByte);
+                        if (unsignedByte > 255) {
+                            LOG.w(LOG_TAG, "clipping in converstion to unsiged byte");
+                            unsignedByte = 255;
+                        }
+                        
+                        /*
                         // find highest peak in bytes
                         int unsignedPeak = 0;
                         for (int i=0; i<bytes.length; i++) {
@@ -521,6 +538,7 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
                         }
                         if (unsignedPeak > maxPlaybackAmpSinceLastCall) maxPlaybackAmpSinceLastCall = unsignedPeak;
                         //LOG.d(LOG_TAG, "onWaveFormDataCapture "+maxPlaybackAmpSinceLastCall+ " / " + unsignedPeak  );
+                        */
                     }
 
                     public void onFftDataCapture(Visualizer visualizer, byte[] bytes, int samplingRate) {
