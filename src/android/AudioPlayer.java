@@ -793,11 +793,14 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
             try{
                 if (this.state == STATE.MEDIA_RUNNING) {
 
-                    (int) unsignedByte = (int) Math.floor((this.recorder.getMaxAmplitude() / 32767) * 256.0);
+                    int maxAmplitude = this.recorder.getMaxAmplitude();
+                    int unsignedByte = (int) Math.floor(( maxAmplitude / 32767.0) * 256.0);
+                    LOG.d(LOG_TAG, "maxPlaybackAmpSinceLastCall:" + maxAmplitude + " --> "+ unsignedByte);
                     if (unsignedByte > 255) {
                         LOG.w(LOG_TAG, "clipping in converstion to unsiged byte");
+                        unsignedByte = 255;
                     }
-                    return (unsignedByte)  ;
+                    return unsignedByte;
                 }
             }
             catch (Exception e) {
