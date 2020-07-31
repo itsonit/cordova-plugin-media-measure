@@ -788,11 +788,16 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
      *
      * @return amplitude or 0 if not recording
      */
-    public float getCurrentAmplitude() {
+    public int getCurrentAmplitude() {
         if (this.recorder != null) {
             try{
                 if (this.state == STATE.MEDIA_RUNNING) {
-                    return (float) this.recorder.getMaxAmplitude() / 32762;
+
+                    (int) unsignedByte = (int) Math.floor((this.recorder.getMaxAmplitude() / 32767) * 256.0);
+                    if (unsignedByte > 255) {
+                        LOG.w(LOG_TAG, "clipping in converstion to unsiged byte");
+                    }
+                    return (unsignedByte)  ;
                 }
             }
             catch (Exception e) {
