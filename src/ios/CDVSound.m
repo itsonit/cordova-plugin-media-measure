@@ -359,6 +359,7 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
         if (!bError) {
             //self.currMediaId = audioFile.player.mediaId;
             self.currMediaId = mediaId;
+            [audioFile.player setMeteringEnabled:YES];
 
             // audioFile.player != nil  or player was successfully created
             // get the audioSession and set the category to allow Playing when device is locked or ring/silent switch engaged
@@ -667,6 +668,8 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
 
         __weak CDVSound* weakSelf = self;
 
+        [audioFile.recorder setMeteringEnabled:YES];
+
         void (^startRecording)(void) = ^{
             NSError* __autoreleasing error = nil;
 
@@ -907,7 +910,23 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
             float inverseAmpRange = 1.0f / (1.0f - minAmp);
             float amp             = powf(10.0f, 0.05f * decibels);
             float adjAmp          = (amp - minAmp) * inverseAmpRange;
-            amplitude = powf(adjAmp, 1.0f / root);
+            amplitude = powf(adjAmp, 1.0f / root) * 256;
+        }
+    } else if ((audioFile != nil) && (audioFile.player != nil) && [audioFile.player isPlaying]) {
+        [audioFile.player updateMeters];
+        float minDecibels = -60.0f; // Or use -60dB, which I measured in a silent room.
+        float decibels    = [audioFile.player averagePowerForChannel:0];
+        if (decibels < minDecibels) {
+            amplitude = 0.0f;
+        } else if (decibels >= 0.0f) {
+            amplitude = 1.0f;
+        } else {
+            float root            = 2.0f;
+            float minAmp          = powf(10.0f, 0.05f * minDecibels);
+            float inverseAmpRange = 1.0f / (1.0f - minAmp);
+            float amp             = powf(10.0f, 0.05f * decibels);
+            float adjAmp          = (amp - minAmp) * inverseAmpRange;
+            amplitude = powf(adjAmp, 1.0f / root) * 256;
         }
     }
     CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDouble:amplitude];
