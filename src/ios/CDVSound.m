@@ -910,7 +910,7 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
             float inverseAmpRange = 1.0f / (1.0f - minAmp);
             float amp             = powf(10.0f, 0.05f * decibels);
             float adjAmp          = (amp - minAmp) * inverseAmpRange;
-            amplitude = powf(adjAmp, 1.0f / root) * 256;
+            amplitude = powf(adjAmp, 1.0f / root) * 100;
         }
     } /*else if ((audioFile != nil) && (audioFile.player != nil) && [audioFile.player isPlaying]) {
         [audioFile.player updateMeters];
