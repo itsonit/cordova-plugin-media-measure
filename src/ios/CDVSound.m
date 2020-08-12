@@ -912,7 +912,7 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
             float adjAmp          = (amp - minAmp) * inverseAmpRange;
             amplitude = powf(adjAmp, 1.0f / root) * 256;
         }
-    } else if ((audioFile != nil) && (audioFile.player != nil) && [audioFile.player isPlaying]) {
+    } /*else if ((audioFile != nil) && (audioFile.player != nil) && [audioFile.player isPlaying]) {
         [audioFile.player updateMeters];
         float minDecibels = -60.0f; // Or use -60dB, which I measured in a silent room.
         float decibels    = [audioFile.player averagePowerForChannel:0];
@@ -928,7 +928,7 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
             float adjAmp          = (amp - minAmp) * inverseAmpRange;
             amplitude = powf(adjAmp, 1.0f / root) * 256;
         }
-    }
+    }*/
     CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDouble:amplitude];
     [self.commandDelegate sendPluginResult:result callbackId:callbackId];
  }

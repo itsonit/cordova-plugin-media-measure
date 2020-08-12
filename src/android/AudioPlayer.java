@@ -500,7 +500,7 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
         // If start playing after prepared
         if (!this.prepareOnly) {
 
-            LOG.d(LOG_TAG, "Init Visualizer after mPlayer is prepared...");
+            /*LOG.d(LOG_TAG, "Init Visualizer after mPlayer is prepared...");
 
             // add visualizer to measure amp during playing
             this.maxPlaybackAmpSinceLastCall=0;
@@ -538,14 +538,14 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
                         }
                         if (unsignedPeak > maxPlaybackAmpSinceLastCall) maxPlaybackAmpSinceLastCall = unsignedPeak;
                         //LOG.d(LOG_TAG, "onWaveFormDataCapture "+maxPlaybackAmpSinceLastCall+ " / " + unsignedPeak  );
-                        */
+                        
                     }
 
                     public void onFftDataCapture(Visualizer visualizer, byte[] bytes, int samplingRate) {
                         //LOG.d(LOG_TAG, "onFftDataCapture" );
                     }
                 }, Visualizer.getMaxCaptureRate(), true, false);
-            this.mVisualizer.setEnabled(true);
+            this.mVisualizer.setEnabled(true);*/
 
             this.player.start();
             this.setState(STATE.MEDIA_RUNNING);
@@ -825,7 +825,7 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
                 e.printStackTrace();
             }
         }
-        if (this.player != null) {
+        /*if (this.player != null) {
             try{
                 // deliver max amp sind last call and reset
                 //LOG.d(LOG_TAG, "maxPlaybackAmpSinceLastCall:" + this.maxPlaybackAmpSinceLastCall);
@@ -836,7 +836,7 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
             catch (Exception e) {
                 e.printStackTrace();
             }
-        }
+        }*/
         LOG.d(LOG_TAG, "Default Null");
         return 0;
     }
