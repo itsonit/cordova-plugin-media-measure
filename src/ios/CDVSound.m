@@ -898,7 +898,7 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
 
     if ((audioFile != nil) && (audioFile.recorder != nil) && [audioFile.recorder isRecording]) {
         [audioFile.recorder updateMeters];
-        float minDecibels = -60.0f; // Or use -60dB, which I measured in a silent room.
+        float minDecibels = -57.0f; // Or use -60dB, which I measured in a silent room.
         float decibels    = [audioFile.recorder averagePowerForChannel:0];
         if (decibels < minDecibels) {
             amplitude = 0.0f;
